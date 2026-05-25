@@ -1,16 +1,12 @@
 import swaggerJSDoc from 'swagger-jsdoc';
 
-// Load our detailed pre-written specification as the base template
-let baseSpec: any = {};
-try {
-  baseSpec = require('./openapi.json');
-} catch (error) {
-  baseSpec = {
+const options: swaggerJSDoc.Options = {
+  definition: {
     openapi: '3.0.0',
     info: {
       title: 'Minimal Multi-Gym Management API',
       version: '1.0.0',
-      description: 'Dynamic and automatically compiled Swagger API specifications.',
+      description: 'Fully automated dynamic Swagger API documentation compiled directly from Express routes JSDoc annotations.',
     },
     servers: [
       {
@@ -18,13 +14,28 @@ try {
         description: 'Development Server',
       },
     ],
-  };
-}
-
-const options: swaggerJSDoc.Options = {
-  // Use the pre-existing complete spec as the foundation
-  definition: baseSpec,
-  // Automatically scan for any new routing files or custom controller comments to merge
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+          description: 'Input your token received from the Login API.',
+        },
+      },
+      schemas: {
+        ErrorResponse: {
+          type: 'object',
+          properties: {
+            status: { type: 'string', example: 'error' },
+            statusCode: { type: 'integer', example: 400 },
+            message: { type: 'string', example: 'Validation failed' },
+          },
+        },
+      },
+    },
+  },
+  // Automatically scan all source route files for JSDoc documentation
   apis: ['./src/routes/*.ts', './src/routes/*.js', './dist/routes/*.js'],
 };
 
