@@ -1,7 +1,13 @@
-import { prisma } from '../config/prisma';
-import { Member, RegisterMemberDTO, UpdateMemberDTO } from '../models/member.model';
+import { prisma } from "../config/prisma";
+import {
+  Member,
+  RegisterMemberDTO,
+  UpdateMemberDTO,
+} from "../models/member.model";
 
-export const createMemberRepository = async (data: RegisterMemberDTO): Promise<Member> => {
+export const createMemberRepository = async (
+  data: RegisterMemberDTO,
+): Promise<Member> => {
   return prisma.member.create({
     data: {
       name: data.name,
@@ -13,7 +19,7 @@ export const createMemberRepository = async (data: RegisterMemberDTO): Promise<M
       photo_url: data.photo_url || null,
       height: data.height || null,
       weight: data.weight || null,
-      status: 'active',
+      status: "active",
       gym_id: data.gym_id,
       plan_id: data.plan_id,
     },
@@ -31,7 +37,9 @@ export interface MemberFilters {
   status?: string;
 }
 
-export const findAllMembersRepository = async (filters: MemberFilters): Promise<Member[]> => {
+export const findAllMembersRepository = async (
+  filters: MemberFilters,
+): Promise<Member[]> => {
   const whereClause: any = {};
 
   if (filters.gym_id) {
@@ -43,13 +51,13 @@ export const findAllMembersRepository = async (filters: MemberFilters): Promise<
   }
 
   if (filters.phone) {
-    whereClause.phone = { contains: filters.phone, mode: 'insensitive' };
+    whereClause.phone = { contains: filters.phone, mode: "insensitive" };
   }
 
   if (filters.search) {
     whereClause.OR = [
-      { name: { contains: filters.search, mode: 'insensitive' } },
-      { phone: { contains: filters.search, mode: 'insensitive' } },
+      { name: { contains: filters.search, mode: "insensitive" } },
+      { phone: { contains: filters.search, mode: "insensitive" } },
     ];
   }
 
@@ -60,18 +68,20 @@ export const findAllMembersRepository = async (filters: MemberFilters): Promise<
       plan: true,
       payments: {
         orderBy: {
-          due_date: 'desc',
+          due_date: "desc",
         },
         take: 1,
       },
     },
     orderBy: {
-      created_at: 'desc',
+      created_at: "desc",
     },
   });
 };
 
-export const findMemberByIdRepository = async (id: number): Promise<Member | null> => {
+export const findMemberByIdRepository = async (
+  id: number,
+): Promise<Member | null> => {
   return prisma.member.findUnique({
     where: { id },
     include: {
@@ -79,17 +89,20 @@ export const findMemberByIdRepository = async (id: number): Promise<Member | nul
       plan: true,
       payments: {
         orderBy: {
-          created_at: 'desc',
+          created_at: "desc",
         },
       },
     },
   });
 };
 
-export const updateMemberRepository = async (id: number, data: UpdateMemberDTO): Promise<Member | null> => {
+export const updateMemberRepository = async (
+  id: number,
+  data: UpdateMemberDTO,
+): Promise<Member | null> => {
   try {
     const updateData: any = { ...data };
-    
+
     if (data.join_date) {
       updateData.join_date = new Date(data.join_date);
     }

@@ -1,13 +1,20 @@
-import * as paymentRepository from '../repositories/payment.repository';
-import * as memberRepository from '../repositories/member.repository';
-import * as planRepository from '../repositories/plan.repository';
-import { prisma } from '../config/prisma';
-import { Payment, RecordPaymentDTO, RenewMembershipDTO } from '../models/payment.model';
+import * as paymentRepository from "../repositories/payment.repository";
+import * as memberRepository from "../repositories/member.repository";
+import * as planRepository from "../repositories/plan.repository";
+import { prisma } from "../config/prisma";
+import {
+  Payment,
+  RecordPaymentDTO,
+  RenewMembershipDTO,
+} from "../models/payment.model";
 
-export const recordPayment = async (id: number, data: RecordPaymentDTO): Promise<any> => {
+export const recordPayment = async (
+  id: number,
+  data: RecordPaymentDTO,
+): Promise<any> => {
   const payment = await paymentRepository.findPaymentByIdRepository(id);
   if (!payment) {
-    throw new Error('Payment record not found');
+    throw new Error("Payment record not found");
   }
 
   const originalPending = Number(payment.amount_pending);
@@ -17,11 +24,11 @@ export const recordPayment = async (id: number, data: RecordPaymentDTO): Promise
   const newPaid = originalPaid + data.amount_paid;
   const newPending = Math.max(0, totalAmount - newPaid);
 
-  let status = 'unpaid';
+  let status = "unpaid";
   if (newPending <= 0) {
-    status = 'paid';
+    status = "paid";
   } else if (newPaid > 0) {
-    status = 'partial';
+    status = "partial";
   }
 
   const updatedPayment = await paymentRepository.updatePaymentRepository(id, {
@@ -32,24 +39,27 @@ export const recordPayment = async (id: number, data: RecordPaymentDTO): Promise
   });
 
   // If marked paid, let's automatically ensure the member status is active
-  if (status === 'paid') {
+  if (status === "paid") {
     await memberRepository.updateMemberRepository(payment.member_id, {
-      status: 'active',
+      status: "active",
     });
   }
 
   return updatedPayment;
 };
 
-export const renewMembership = async (memberId: number, data: RenewMembershipDTO): Promise<any> => {
+export const renewMembership = async (
+  memberId: number,
+  data: RenewMembershipDTO,
+): Promise<any> => {
   const member = await memberRepository.findMemberByIdRepository(memberId);
   if (!member) {
-    throw new Error('Member not found');
+    throw new Error("Member not found");
   }
 
   const plan = await planRepository.findPlanByIdRepository(data.plan_id);
   if (!plan) {
-    throw new Error('Membership plan not found');
+    throw new Error("Membership plan not found");
   }
 
   // Calculate new due date (from now or selected date)
@@ -63,7 +73,7 @@ export const renewMembership = async (memberId: number, data: RenewMembershipDTO
       where: { id: memberId },
       data: {
         plan_id: data.plan_id,
-        status: 'active',
+        status: "active",
       },
     });
 
@@ -71,10 +81,10 @@ export const renewMembership = async (memberId: number, data: RenewMembershipDTO
     const newPayment = await tx.payment.create({
       data: {
         member_id: memberId,
-        amount_paid: 0.00,
+        amount_paid: 0.0,
         amount_pending: plan.price,
         due_date: dueDate,
-        payment_status: 'unpaid',
+        payment_status: "unpaid",
       },
       include: {
         member: {
@@ -90,33 +100,52 @@ export const renewMembership = async (memberId: number, data: RenewMembershipDTO
   });
 };
 
-export const generateWhatsAppLink = (phone: string, name: string, amount: number, dueDate: Date, gymName: string): string => {
-  const formattedDate = new Date(dueDate).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
+export const generateWhatsAppLink = (
+  phone: string,
+  name: string,
+  amount: number,
+  dueDate: Date,
+  gymName: string,
+): string => {
+  const formattedDate = new Date(dueDate).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
   });
-  
+
   // Format phone to clean international format (remove non-digits, ensure country code prefix if needed)
-  let cleanPhone = phone.replace(/\D/g, '');
+  let cleanPhone = phone.replace(/\D/g, "");
   // Default to standard prefix if not started with country code
   if (cleanPhone.length === 10) {
-    cleanPhone = '91' + cleanPhone; // Default to India country code if 10 digits, since context is Chennai/Bangalore/etc.
+    cleanPhone = "91" + cleanPhone; // Default to India country code if 10 digits, since context is Chennai/Bangalore/etc.
   }
 
   const text = `Hi ${name}, this is a friendly reminder from ${gymName} gym branch. Your membership fee of ₹${amount.toFixed(2)} is due on ${formattedDate}. Please renew your membership to continue your workouts smoothly. Thank you!`;
-  
+
   return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`;
 };
 
 export const getOverdueDashboard = async (gymId?: number): Promise<any> => {
-  const unpaidPayments = await paymentRepository.findUnpaidPaymentsRepository(gymId);
+  const unpaidPayments =
+    await paymentRepository.findUnpaidPaymentsRepository(gymId);
   const now = new Date();
-  
+
   // Set times to start/end of day for precise date boundary checks
-  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
-  
+  const startOfToday = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+  );
+  const endOfToday = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+    23,
+    59,
+    59,
+    999,
+  );
+
   const endOfWeek = new Date(startOfToday.getTime() + 7 * 24 * 60 * 60 * 1000);
 
   const dueToday: any[] = [];
@@ -125,14 +154,20 @@ export const getOverdueDashboard = async (gymId?: number): Promise<any> => {
 
   unpaidPayments.forEach((payment) => {
     const dueDate = new Date(payment.due_date);
-    
+
     // Construct premium metadata
     const name = payment.member.name;
     const phone = payment.member.phone;
     const amount = Number(payment.amount_pending);
     const gymName = payment.member.gym.name;
-    
-    const whatsappLink = generateWhatsAppLink(phone, name, amount, dueDate, gymName);
+
+    const whatsappLink = generateWhatsAppLink(
+      phone,
+      name,
+      amount,
+      dueDate,
+      gymName,
+    );
 
     const paymentInfo = {
       id: payment.id,
@@ -146,22 +181,22 @@ export const getOverdueDashboard = async (gymId?: number): Promise<any> => {
       payment_status: payment.payment_status,
       whatsapp_link: whatsappLink,
       days_delayed: 0,
-      color_indicator: 'yellow',
+      color_indicator: "yellow",
     };
 
     if (dueDate < startOfToday) {
       // Overdue
       const diffTime = Math.abs(startOfToday.getTime() - dueDate.getTime());
       paymentInfo.days_delayed = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      paymentInfo.color_indicator = 'red';
+      paymentInfo.color_indicator = "red";
       overdue.push(paymentInfo);
     } else if (dueDate >= startOfToday && dueDate <= endOfToday) {
       // Due Today
-      paymentInfo.color_indicator = 'yellow';
+      paymentInfo.color_indicator = "yellow";
       dueToday.push(paymentInfo);
     } else if (dueDate > endOfToday && dueDate <= endOfWeek) {
       // Due This Week
-      paymentInfo.color_indicator = 'yellow';
+      paymentInfo.color_indicator = "yellow";
       dueThisWeek.push(paymentInfo);
     }
   });
@@ -177,10 +212,12 @@ export const getPaymentStats = async (gymId?: number) => {
   return paymentRepository.getSystemWideStatsRepository(gymId);
 };
 
-export const getWhatsAppReminderPayload = async (paymentId: number): Promise<{ text: string; link: string }> => {
+export const getWhatsAppReminderPayload = async (
+  paymentId: number,
+): Promise<{ text: string; link: string }> => {
   const payment = await paymentRepository.findPaymentByIdRepository(paymentId);
   if (!payment) {
-    throw new Error('Payment record not found');
+    throw new Error("Payment record not found");
   }
 
   const name = payment.member.name;
@@ -189,15 +226,15 @@ export const getWhatsAppReminderPayload = async (paymentId: number): Promise<{ t
   const gymName = payment.member.gym.name;
   const dueDate = payment.due_date;
 
-  const formattedDate = new Date(dueDate).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
+  const formattedDate = new Date(dueDate).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
   });
-  
-  let cleanPhone = phone.replace(/\D/g, '');
+
+  let cleanPhone = phone.replace(/\D/g, "");
   if (cleanPhone.length === 10) {
-    cleanPhone = '91' + cleanPhone;
+    cleanPhone = "91" + cleanPhone;
   }
 
   const text = `Hi ${name}, this is a friendly reminder from ${gymName} gym branch. Your membership fee of ₹${amount.toFixed(2)} is due on ${formattedDate}. Please renew your membership to continue your workouts smoothly. Thank you!`;

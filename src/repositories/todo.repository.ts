@@ -1,7 +1,9 @@
-import { prisma } from '../config/prisma';
-import { Todo, CreateTodoDTO, UpdateTodoDTO } from '../models/todo.model';
+import { prisma } from "../config/prisma";
+import { Todo, CreateTodoDTO, UpdateTodoDTO } from "../models/todo.model";
 
-export const createTodoRepository = async (data: CreateTodoDTO): Promise<Todo> => {
+export const createTodoRepository = async (
+  data: CreateTodoDTO,
+): Promise<Todo> => {
   return prisma.todo.create({
     data: {
       title: data.title,
@@ -13,18 +15,23 @@ export const createTodoRepository = async (data: CreateTodoDTO): Promise<Todo> =
 export const findAllTodosRepository = async (): Promise<Todo[]> => {
   return prisma.todo.findMany({
     orderBy: {
-      created_at: 'desc',
+      created_at: "desc",
     },
   });
 };
 
-export const findTodoByIdRepository = async (id: number): Promise<Todo | null> => {
+export const findTodoByIdRepository = async (
+  id: number,
+): Promise<Todo | null> => {
   return prisma.todo.findUnique({
     where: { id },
   });
 };
 
-export const updateTodoRepository = async (id: number, data: UpdateTodoDTO): Promise<Todo | null> => {
+export const updateTodoRepository = async (
+  id: number,
+  data: UpdateTodoDTO,
+): Promise<Todo | null> => {
   try {
     return await prisma.todo.update({
       where: { id },

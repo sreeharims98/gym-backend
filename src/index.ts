@@ -1,13 +1,14 @@
-import express from 'express';
-import cors from 'cors';
-import dotenv from 'dotenv';
-import authRoutes from './routes/auth.routes';
-import gymRoutes from './routes/gym.routes';
-import planRoutes from './routes/plan.routes';
-import memberRoutes from './routes/member.routes';
-import paymentRoutes from './routes/payment.routes';
-import { errorHandler } from './middlewares/errorHandler';
-import { swaggerSpec } from './config/swagger';
+import "./config/swaggerRegistry"; // Extend Zod with openapi metadata early
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+import authRoutes from "./routes/auth.routes";
+import gymRoutes from "./routes/gym.routes";
+import planRoutes from "./routes/plan.routes";
+import memberRoutes from "./routes/member.routes";
+import paymentRoutes from "./routes/payment.routes";
+import { errorHandler } from "./middlewares/errorHandler";
+import { getSwaggerSpec } from "./config/swagger";
 
 dotenv.config();
 
@@ -19,18 +20,27 @@ app.use(cors());
 app.use(express.json());
 
 // REST Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/gyms', gymRoutes);
-app.use('/api/plans', planRoutes);
-app.use('/api/members', memberRoutes);
-app.use('/api/payments', paymentRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/gyms", gymRoutes);
+app.use("/api/plans", planRoutes);
+app.use("/api/members", memberRoutes);
+app.use("/api/payments", paymentRoutes);
 
 // Swagger API Documentation
-app.get('/api-docs/openapi.json', (req, res) => {
-  res.status(200).json(swaggerSpec);
+app.get("/api-docs/openapi.json", (req, res) => {
+  try {
+    res.status(200).json(getSwaggerSpec());
+  } catch (error: any) {
+    res
+      .status(500)
+      .json({
+        message: "Failed to compile Swagger spec",
+        error: error.message,
+      });
+  }
 });
 
-app.get('/api-docs', (req, res) => {
+app.get("/api-docs", (req, res) => {
   res.send(`
 <!DOCTYPE html>
 <html lang="en">
@@ -75,8 +85,8 @@ app.get('/api-docs', (req, res) => {
 });
 
 // Default status probe
-app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'ok', time: new Date() });
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "ok", time: new Date() });
 });
 
 // Global Error Handling Middleware
@@ -84,5 +94,7 @@ app.use(errorHandler);
 
 // Start server
 app.listen(port, () => {
-  console.log(`Gym Management API Server is running on http://localhost:${port}`);
+  console.log(
+    `Gym Management API Server is running on http://localhost:${port}`,
+  );
 });

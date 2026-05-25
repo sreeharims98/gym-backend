@@ -1,4 +1,4 @@
-import { Member as PrismaMember } from '../generated/prisma';
+import { Member as PrismaMember } from "../generated/prisma";
 
 export type Member = PrismaMember;
 

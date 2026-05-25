@@ -1,5 +1,5 @@
-import { prisma } from '../config/prisma';
-import { Gym, CreateGymDTO, UpdateGymDTO } from '../models/gym.model';
+import { prisma } from "../config/prisma";
+import { Gym, CreateGymDTO, UpdateGymDTO } from "../models/gym.model";
 
 export const createGymRepository = async (data: CreateGymDTO): Promise<Gym> => {
   return prisma.gym.create({
@@ -14,18 +14,23 @@ export const createGymRepository = async (data: CreateGymDTO): Promise<Gym> => {
 export const findAllGymsRepository = async (): Promise<Gym[]> => {
   return prisma.gym.findMany({
     orderBy: {
-      created_at: 'desc',
+      created_at: "desc",
     },
   });
 };
 
-export const findGymByIdRepository = async (id: number): Promise<Gym | null> => {
+export const findGymByIdRepository = async (
+  id: number,
+): Promise<Gym | null> => {
   return prisma.gym.findUnique({
     where: { id },
   });
 };
 
-export const updateGymRepository = async (id: number, data: UpdateGymDTO): Promise<Gym | null> => {
+export const updateGymRepository = async (
+  id: number,
+  data: UpdateGymDTO,
+): Promise<Gym | null> => {
   try {
     return await prisma.gym.update({
       where: { id },

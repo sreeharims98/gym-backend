@@ -1,7 +1,9 @@
-import { prisma } from '../config/prisma';
-import { Plan, CreatePlanDTO, UpdatePlanDTO } from '../models/plan.model';
+import { prisma } from "../config/prisma";
+import { Plan, CreatePlanDTO, UpdatePlanDTO } from "../models/plan.model";
 
-export const createPlanRepository = async (data: CreatePlanDTO): Promise<Plan> => {
+export const createPlanRepository = async (
+  data: CreatePlanDTO,
+): Promise<Plan> => {
   return prisma.plan.create({
     data: {
       name: data.name,
@@ -14,18 +16,23 @@ export const createPlanRepository = async (data: CreatePlanDTO): Promise<Plan> =
 export const findAllPlansRepository = async (): Promise<Plan[]> => {
   return prisma.plan.findMany({
     orderBy: {
-      duration_months: 'asc',
+      duration_months: "asc",
     },
   });
 };
 
-export const findPlanByIdRepository = async (id: number): Promise<Plan | null> => {
+export const findPlanByIdRepository = async (
+  id: number,
+): Promise<Plan | null> => {
   return prisma.plan.findUnique({
     where: { id },
   });
 };
 
-export const updatePlanRepository = async (id: number, data: UpdatePlanDTO): Promise<Plan | null> => {
+export const updatePlanRepository = async (
+  id: number,
+  data: UpdatePlanDTO,
+): Promise<Plan | null> => {
   try {
     return await prisma.plan.update({
       where: { id },

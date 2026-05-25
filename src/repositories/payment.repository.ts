@@ -1,5 +1,5 @@
-import { prisma } from '../config/prisma';
-import { Payment, RecordPaymentDTO } from '../models/payment.model';
+import { prisma } from "../config/prisma";
+import { Payment, RecordPaymentDTO } from "../models/payment.model";
 
 export const findPaymentByIdRepository = async (id: number): Promise<any> => {
   return prisma.payment.findUnique({
@@ -22,7 +22,7 @@ export const updatePaymentRepository = async (
     amount_pending: number;
     payment_status: string;
     payment_date?: Date | null;
-  }
+  },
 ): Promise<any> => {
   return prisma.payment.update({
     where: { id },
@@ -55,9 +55,11 @@ export const createPaymentRepository = async (data: {
   });
 };
 
-export const findUnpaidPaymentsRepository = async (gymId?: number): Promise<any[]> => {
+export const findUnpaidPaymentsRepository = async (
+  gymId?: number,
+): Promise<any[]> => {
   const whereClause: any = {
-    payment_status: { in: ['unpaid', 'partial'] },
+    payment_status: { in: ["unpaid", "partial"] },
   };
 
   if (gymId) {
@@ -75,12 +77,14 @@ export const findUnpaidPaymentsRepository = async (gymId?: number): Promise<any[
       },
     },
     orderBy: {
-      due_date: 'asc',
+      due_date: "asc",
     },
   });
 };
 
-export const getSystemWideStatsRepository = async (gymId?: number): Promise<any> => {
+export const getSystemWideStatsRepository = async (
+  gymId?: number,
+): Promise<any> => {
   const paymentWhere: any = {};
   const memberWhere: any = {};
 
@@ -103,13 +107,13 @@ export const getSystemWideStatsRepository = async (gymId?: number): Promise<any>
   const activeMembers = await prisma.member.count({
     where: {
       ...memberWhere,
-      status: 'active',
+      status: "active",
     },
   });
   const expiredMembers = await prisma.member.count({
     where: {
       ...memberWhere,
-      status: 'expired',
+      status: "expired",
     },
   });
 
@@ -117,7 +121,7 @@ export const getSystemWideStatsRepository = async (gymId?: number): Promise<any>
   const overdueCount = await prisma.payment.count({
     where: {
       ...paymentWhere,
-      payment_status: { in: ['unpaid', 'partial'] },
+      payment_status: { in: ["unpaid", "partial"] },
       due_date: { lt: new Date() },
     },
   });
@@ -125,7 +129,7 @@ export const getSystemWideStatsRepository = async (gymId?: number): Promise<any>
   // 4. Branch revenue summary
   const branchRevenueRaw = await prisma.payment.findMany({
     where: {
-      payment_status: { in: ['paid', 'partial'] },
+      payment_status: { in: ["paid", "partial"] },
     },
     select: {
       amount_paid: true,
@@ -143,13 +147,14 @@ export const getSystemWideStatsRepository = async (gymId?: number): Promise<any>
   });
 
   // Roll up branch revenues
-  const branchRevenuesMap: Record<number, { name: string; collected: number }> = {};
+  const branchRevenuesMap: Record<number, { name: string; collected: number }> =
+    {};
   branchRevenueRaw.forEach((row) => {
     if (row.member && row.member.gym) {
       const gId = row.member.gym_id;
       const gName = row.member.gym.name;
       const val = Number(row.amount_paid);
-      
+
       if (!branchRevenuesMap[gId]) {
         branchRevenuesMap[gId] = { name: gName, collected: 0 };
       }
@@ -157,11 +162,13 @@ export const getSystemWideStatsRepository = async (gymId?: number): Promise<any>
     }
   });
 
-  const branchRevenues = Object.entries(branchRevenuesMap).map(([id, item]) => ({
-    gym_id: parseInt(id, 10),
-    name: item.name,
-    collected: item.collected,
-  }));
+  const branchRevenues = Object.entries(branchRevenuesMap).map(
+    ([id, item]) => ({
+      gym_id: parseInt(id, 10),
+      name: item.name,
+      collected: item.collected,
+    }),
+  );
 
   return {
     total_collected: Number(aggregations._sum.amount_paid || 0),

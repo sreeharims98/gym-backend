@@ -1,8 +1,12 @@
-import { Request, Response, NextFunction } from 'express';
-import * as paymentService from '../services/payment.service';
-import { AuthenticatedRequest } from '../middlewares/auth';
+import { Request, Response, NextFunction } from "express";
+import * as paymentService from "../services/payment.service";
+import { AuthenticatedRequest } from "../middlewares/auth";
 
-export const payPaymentController = async (req: Request, res: Response, next: NextFunction) => {
+export const payPaymentController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     const paymentId = parseInt(req.params.id, 10);
     const updated = await paymentService.recordPayment(paymentId, req.body);
@@ -12,7 +16,11 @@ export const payPaymentController = async (req: Request, res: Response, next: Ne
   }
 };
 
-export const renewMembershipController = async (req: Request, res: Response, next: NextFunction) => {
+export const renewMembershipController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     const memberId = parseInt(req.params.id, 10);
     const newInvoice = await paymentService.renewMembership(memberId, req.body);
@@ -22,15 +30,19 @@ export const renewMembershipController = async (req: Request, res: Response, nex
   }
 };
 
-export const getOverdueDashboardController = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+export const getOverdueDashboardController = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     // If operator is a staff, only show their specific gym branch overdue records.
     // If operator is an owner, they can specify a gym_id in query or get all!
     let gymId: number | undefined;
 
-    if (req.user?.role === 'staff') {
+    if (req.user?.role === "staff") {
       gymId = req.user.gym_id || undefined;
-    } else if (req.user?.role === 'owner' && req.query.gym_id) {
+    } else if (req.user?.role === "owner" && req.query.gym_id) {
       gymId = parseInt(String(req.query.gym_id), 10);
     }
 
@@ -41,13 +53,17 @@ export const getOverdueDashboardController = async (req: AuthenticatedRequest, r
   }
 };
 
-export const getPaymentStatsController = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+export const getPaymentStatsController = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     let gymId: number | undefined;
 
-    if (req.user?.role === 'staff') {
+    if (req.user?.role === "staff") {
       gymId = req.user.gym_id || undefined;
-    } else if (req.user?.role === 'owner' && req.query.gym_id) {
+    } else if (req.user?.role === "owner" && req.query.gym_id) {
       gymId = parseInt(String(req.query.gym_id), 10);
     }
 
@@ -58,7 +74,11 @@ export const getPaymentStatsController = async (req: AuthenticatedRequest, res: 
   }
 };
 
-export const getWhatsAppReminderController = async (req: Request, res: Response, next: NextFunction) => {
+export const getWhatsAppReminderController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     const paymentId = parseInt(req.params.id, 10);
     const payload = await paymentService.getWhatsAppReminderPayload(paymentId);

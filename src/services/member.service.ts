@@ -1,20 +1,26 @@
-import * as memberRepository from '../repositories/member.repository';
-import * as planRepository from '../repositories/plan.repository';
-import * as gymRepository from '../repositories/gym.repository';
-import { prisma } from '../config/prisma';
-import { Member, RegisterMemberDTO, UpdateMemberDTO } from '../models/member.model';
+import * as memberRepository from "../repositories/member.repository";
+import * as planRepository from "../repositories/plan.repository";
+import * as gymRepository from "../repositories/gym.repository";
+import { prisma } from "../config/prisma";
+import {
+  Member,
+  RegisterMemberDTO,
+  UpdateMemberDTO,
+} from "../models/member.model";
 
-export const registerMember = async (data: RegisterMemberDTO): Promise<Member> => {
+export const registerMember = async (
+  data: RegisterMemberDTO,
+): Promise<Member> => {
   // Validate that the branch exists
   const gym = await gymRepository.findGymByIdRepository(data.gym_id);
   if (!gym) {
-    throw new Error('Gym branch not found');
+    throw new Error("Gym branch not found");
   }
 
   // Fetch plan details to calculate prices and due dates
   const plan = await planRepository.findPlanByIdRepository(data.plan_id);
   if (!plan) {
-    throw new Error('Membership plan not found');
+    throw new Error("Membership plan not found");
   }
 
   // Calculate membership expiration/payment due date
@@ -36,7 +42,7 @@ export const registerMember = async (data: RegisterMemberDTO): Promise<Member> =
         photo_url: data.photo_url || null,
         height: data.height || null,
         weight: data.weight || null,
-        status: 'active',
+        status: "active",
         gym_id: data.gym_id,
         plan_id: data.plan_id,
       },
@@ -50,10 +56,10 @@ export const registerMember = async (data: RegisterMemberDTO): Promise<Member> =
     await tx.payment.create({
       data: {
         member_id: member.id,
-        amount_paid: 0.00,
+        amount_paid: 0.0,
         amount_pending: plan.price,
         due_date: dueDate,
-        payment_status: 'unpaid',
+        payment_status: "unpaid",
       },
     });
 
@@ -61,7 +67,9 @@ export const registerMember = async (data: RegisterMemberDTO): Promise<Member> =
   });
 };
 
-export const getAllMembers = async (filters: memberRepository.MemberFilters): Promise<Member[]> => {
+export const getAllMembers = async (
+  filters: memberRepository.MemberFilters,
+): Promise<Member[]> => {
   return memberRepository.findAllMembersRepository(filters);
 };
 
@@ -69,7 +77,10 @@ export const getMemberById = async (id: number): Promise<Member | null> => {
   return memberRepository.findMemberByIdRepository(id);
 };
 
-export const updateMember = async (id: number, data: UpdateMemberDTO): Promise<Member | null> => {
+export const updateMember = async (
+  id: number,
+  data: UpdateMemberDTO,
+): Promise<Member | null> => {
   const existing = await memberRepository.findMemberByIdRepository(id);
   if (!existing) return null;
 

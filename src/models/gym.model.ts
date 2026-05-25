@@ -1,4 +1,4 @@
-import { Gym as PrismaGym } from '../generated/prisma';
+import { Gym as PrismaGym } from "../generated/prisma";
 
 export type Gym = PrismaGym;
 

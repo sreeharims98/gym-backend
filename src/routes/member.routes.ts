@@ -1,193 +1,141 @@
-import { Router } from 'express';
+import { Router } from "express";
 import {
   registerMemberController,
   getAllMembersController,
   getMemberByIdController,
   updateMemberController,
   deleteMemberController,
-} from '../controllers/member.controller';
-import { validate } from '../middlewares/validate';
-import { authenticate } from '../middlewares/auth';
-import { registerMemberSchema, updateMemberSchema, getMemberSchema, listMembersQuerySchema } from '../validators/member.validator';
+} from "../controllers/member.controller";
+import { validate } from "../middlewares/validate";
+import { authenticate } from "../middlewares/auth";
+import {
+  registerMemberSchema,
+  updateMemberSchema,
+  getMemberSchema,
+  listMembersQuerySchema,
+} from "../validators/member.validator";
+import { registry } from "../config/swaggerRegistry";
 
 const router = Router();
 
 // Secure all routes with authentication
 router.use(authenticate);
 
-/**
- * @openapi
- * /api/members:
- *   get:
- *     tags:
- *       - Members Management
- *     summary: Search & Filter gym members (Owner & Staff)
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - name: search
- *         in: query
- *         description: Search by name or phone number
- *         schema:
- *           type: string
- *       - name: phone
- *         in: query
- *         description: Match clean phone string
- *         schema:
- *           type: string
- *       - name: gym_id
- *         in: query
- *         description: Filter by Branch ID
- *         schema:
- *           type: integer
- *       - name: status
- *         in: query
- *         description: Filter by membership status
- *         schema:
- *           type: string
- *           enum: [active, expired, pending]
- *     responses:
- *       200:
- *         description: List of members matched against criteria
- */
-router.get('/', validate(listMembersQuerySchema), getAllMembersController);
+// Programmatically register member routes
+registry.registerPath({
+  method: "get",
+  path: "/api/members",
+  summary: "Search & Filter gym members (Owner & Staff)",
+  description:
+    "Returns members matched against filters like phone, gym_id, status, or search query.",
+  tags: ["Members Management"],
+  security: [{ bearerAuth: [] }],
+  request: {
+    query: listMembersQuerySchema.shape.query,
+  },
+  responses: {
+    200: {
+      description: "List of matched members",
+    },
+  },
+});
 
-/**
- * @openapi
- * /api/members/{id}:
- *   get:
- *     tags:
- *       - Members Management
- *     summary: Get complete member profile & bill history
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - name: id
- *         in: path
- *         required: true
- *         schema:
- *           type: integer
- *     responses:
- *       200:
- *         description: Member profile and invoice tracking details
- *       404:
- *         description: Member not found
- */
-router.get('/:id', validate(getMemberSchema), getMemberByIdController);
+registry.registerPath({
+  method: "get",
+  path: "/api/members/{id}",
+  summary: "Get complete member profile & bill history",
+  description: "Returns member parameters and complete historical invoices.",
+  tags: ["Members Management"],
+  security: [{ bearerAuth: [] }],
+  request: {
+    params: getMemberSchema.shape.params,
+  },
+  responses: {
+    200: {
+      description: "Member complete profile and invoices",
+    },
+    404: {
+      description: "Member not found",
+    },
+  },
+});
 
-/**
- * @openapi
- * /api/members:
- *   post:
- *     tags:
- *       - Members Management
- *     summary: Register a new Gym Member (Owner & Staff)
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true,
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - name
- *               - phone
- *               - join_date
- *               - emergency_contact
- *               - gym_id
- *               - plan_id
- *             properties:
- *               name:
- *                 type: string
- *                 example: John Doe
- *               phone:
- *                 type: string
- *                 example: +91 98765 43210
- *               email:
- *                 type: string
- *                 format: email
- *                 example: john@gmail.com
- *               address:
- *                 type: string
- *                 example: Adyar, Chennai
- *               join_date:
- *                 type: string
- *                 format: date
- *                 example: "2026-05-25"
- *               emergency_contact:
- *                 type: string
- *                 example: Jane Doe (+91 99999 88888)
- *               photo_url:
- *                 type: string
- *                 example: https://images.unsplash.com/photo-1534438327276-14e5300c3a48
- *               height:
- *                 type: number
- *                 example: 178.5
- *               weight:
- *                 type: number
- *                 example: 72.3
- *               gym_id:
- *                 type: integer
- *                 example: 1
- *               plan_id:
- *                 type: integer
- *                 example: 1
- *     responses:
- *       201:
- *         description: Member registered and first invoice created atomicly
- */
-router.post('/', validate(registerMemberSchema), registerMemberController);
+registry.registerPath({
+  method: "post",
+  path: "/api/members",
+  summary: "Register a new Gym Member (Owner & Staff)",
+  description:
+    "Registers a member, computes membership expiry, and atomicly posts their first unpaid invoice.",
+  tags: ["Members Management"],
+  security: [{ bearerAuth: [] }],
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: registerMemberSchema.shape.body,
+        },
+      },
+    },
+  },
+  responses: {
+    201: {
+      description: "Member registered and initial invoice generated",
+    },
+  },
+});
 
-/**
- * @openapi
- * /api/members/{id}:
- *   put:
- *     tags:
- *       - Members Management
- *     summary: Edit member profile (Owner & Staff)
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - name: id
- *         in: path
- *         required: true
- *         schema:
- *           type: integer
- *     requestBody:
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               weight:
- *                 type: number
- *                 example: 70.8
- *     responses:
- *       200:
- *         description: Member details updated
- */
-router.put('/:id', validate(getMemberSchema), validate(updateMemberSchema), updateMemberController);
+registry.registerPath({
+  method: "put",
+  path: "/api/members/{id}",
+  summary: "Edit member profile (Owner & Staff)",
+  description:
+    "Updates specific standing status, emergency contact, or weight/height parameters.",
+  tags: ["Members Management"],
+  security: [{ bearerAuth: [] }],
+  request: {
+    params: getMemberSchema.shape.params,
+    body: {
+      content: {
+        "application/json": {
+          schema: updateMemberSchema.shape.body,
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: "Member details updated",
+    },
+  },
+});
 
-/**
- * @openapi
- * /api/members/{id}:
- *   delete:
- *     tags:
- *       - Members Management
- *     summary: Delete member profile record
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - name: id
- *         in: path
- *         required: true
- *         schema:
- *           type: integer
- *     responses:
- *       204:
- *         description: Member deleted successfully
- */
-router.delete('/:id', validate(getMemberSchema), deleteMemberController);
+registry.registerPath({
+  method: "delete",
+  path: "/api/members/{id}",
+  summary: "Delete member profile record",
+  description:
+    "Removes a member from the database along with associated payment history.",
+  tags: ["Members Management"],
+  security: [{ bearerAuth: [] }],
+  request: {
+    params: getMemberSchema.shape.params,
+  },
+  responses: {
+    204: {
+      description: "Member deleted successfully",
+    },
+  },
+});
+
+router.get("/", validate(listMembersQuerySchema), getAllMembersController);
+router.get("/:id", validate(getMemberSchema), getMemberByIdController);
+router.post("/", validate(registerMemberSchema), registerMemberController);
+router.put(
+  "/:id",
+  validate(getMemberSchema),
+  validate(updateMemberSchema),
+  updateMemberController,
+);
+router.delete("/:id", validate(getMemberSchema), deleteMemberController);
 
 export default router;

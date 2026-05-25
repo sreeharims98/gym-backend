@@ -1,4 +1,4 @@
-import { Payment as PrismaPayment } from '../generated/prisma';
+import { Payment as PrismaPayment } from "../generated/prisma";
 
 export type Payment = PrismaPayment;
 

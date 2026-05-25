@@ -1,146 +1,147 @@
-import { Router } from 'express';
+import { Router } from "express";
 import {
   createGymController,
   getAllGymsController,
   getGymByIdController,
   updateGymController,
   deleteGymController,
-} from '../controllers/gym.controller';
-import { validate } from '../middlewares/validate';
-import { authenticate, requireRole } from '../middlewares/auth';
-import { createGymSchema, updateGymSchema, getGymSchema } from '../validators/gym.validator';
+} from "../controllers/gym.controller";
+import { validate } from "../middlewares/validate";
+import { authenticate, requireRole } from "../middlewares/auth";
+import {
+  createGymSchema,
+  updateGymSchema,
+  getGymSchema,
+} from "../validators/gym.validator";
+import { registry } from "../config/swaggerRegistry";
 
 const router = Router();
 
 // Secure all routes with authentication
 router.use(authenticate);
 
-/**
- * @openapi
- * /api/gyms:
- *   get:
- *     tags:
- *       - Gym Branches
- *     summary: List all gym branches (Owner & Staff)
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: List of registered gym branches
- *       401:
- *         description: Unauthorized
- */
-router.get('/', getAllGymsController);
+// Programmatically register branch endpoints
+registry.registerPath({
+  method: "get",
+  path: "/api/gyms",
+  summary: "List all gym branches (Owner & Staff)",
+  description: "Returns all gym locations registered in the system.",
+  tags: ["Gym Branches"],
+  security: [{ bearerAuth: [] }],
+  responses: {
+    200: {
+      description: "List of registered gym branches",
+    },
+  },
+});
 
-/**
- * @openapi
- * /api/gyms/{id}:
- *   get:
- *     tags:
- *       - Gym Branches
- *     summary: Get branch details by ID
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - name: id
- *         in: path
- *         required: true
- *         schema:
- *           type: integer
- *     responses:
- *       200:
- *         description: Branch details
- *       404:
- *         description: Branch not found
- */
-router.get('/:id', validate(getGymSchema), getGymByIdController);
+registry.registerPath({
+  method: "get",
+  path: "/api/gyms/{id}",
+  summary: "Get branch details by ID (Owner & Staff)",
+  description: "Returns complete properties of a specific gym branch.",
+  tags: ["Gym Branches"],
+  security: [{ bearerAuth: [] }],
+  request: {
+    params: getGymSchema.shape.params,
+  },
+  responses: {
+    200: {
+      description: "Branch details",
+    },
+    404: {
+      description: "Branch not found",
+    },
+  },
+});
 
-/**
- * @openapi
- * /api/gyms:
- *   post:
- *     tags:
- *       - Gym Branches
- *     summary: Create a new branch (Owner only)
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true,
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - name
- *               - location
- *               - contact_no
- *             properties:
- *               name:
- *                 type: string
- *                 example: Chennai Branch
- *               location:
- *                 type: string
- *                 example: Adyar, Chennai
- *               contact_no:
- *                 type: string
- *                 example: +91 98765 43210
- *     responses:
- *       201:
- *         description: Branch created successfully
- *       403:
- *         description: Forbidden (Owner privilege required)
- */
-router.post('/', requireRole('owner'), validate(createGymSchema), createGymController);
+registry.registerPath({
+  method: "post",
+  path: "/api/gyms",
+  summary: "Create a new branch (Owner only)",
+  description: "Registers a new gym location. Restricted to Owner privileges.",
+  tags: ["Gym Branches"],
+  security: [{ bearerAuth: [] }],
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: createGymSchema.shape.body,
+        },
+      },
+    },
+  },
+  responses: {
+    201: {
+      description: "Branch created successfully",
+    },
+    403: {
+      description: "Forbidden: Owner role required",
+    },
+  },
+});
 
-/**
- * @openapi
- * /api/gyms/{id}:
- *   put:
- *     tags:
- *       - Gym Branches
- *     summary: Update branch details (Owner only)
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - name: id
- *         in: path
- *         required: true
- *         schema:
- *           type: integer
- *     requestBody:
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               name:
- *                 type: string
- *                 example: Chennai Main Branch
- *     responses:
- *       200:
- *         description: Branch updated successfully
- */
-router.put('/:id', requireRole('owner'), validate(getGymSchema), validate(updateGymSchema), updateGymController);
+registry.registerPath({
+  method: "put",
+  path: "/api/gyms/{id}",
+  summary: "Update branch details (Owner only)",
+  description: "Updates specific location or name coordinates for a branch.",
+  tags: ["Gym Branches"],
+  security: [{ bearerAuth: [] }],
+  request: {
+    params: getGymSchema.shape.params,
+    body: {
+      content: {
+        "application/json": {
+          schema: updateGymSchema.shape.body,
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: "Branch updated successfully",
+    },
+  },
+});
 
-/**
- * @openapi
- * /api/gyms/{id}:
- *   delete:
- *     tags:
- *       - Gym Branches
- *     summary: Delete branch (Owner only)
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - name: id
- *         in: path
- *         required: true
- *         schema:
- *           type: integer
- *     responses:
- *       204:
- *         description: Branch deleted successfully
- */
-router.delete('/:id', requireRole('owner'), validate(getGymSchema), deleteGymController);
+registry.registerPath({
+  method: "delete",
+  path: "/api/gyms/{id}",
+  summary: "Delete branch (Owner only)",
+  description: "Removes a branch location record from the database.",
+  tags: ["Gym Branches"],
+  security: [{ bearerAuth: [] }],
+  request: {
+    params: getGymSchema.shape.params,
+  },
+  responses: {
+    204: {
+      description: "Branch deleted successfully",
+    },
+  },
+});
+
+router.get("/", getAllGymsController);
+router.get("/:id", validate(getGymSchema), getGymByIdController);
+router.post(
+  "/",
+  requireRole("owner"),
+  validate(createGymSchema),
+  createGymController,
+);
+router.put(
+  "/:id",
+  requireRole("owner"),
+  validate(getGymSchema),
+  validate(updateGymSchema),
+  updateGymController,
+);
+router.delete(
+  "/:id",
+  requireRole("owner"),
+  validate(getGymSchema),
+  deleteGymController,
+);
 
 export default router;

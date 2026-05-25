@@ -1,42 +1,22 @@
-import swaggerJSDoc from 'swagger-jsdoc';
+import { OpenApiGeneratorV3 } from "@asteasolutions/zod-to-openapi";
+import { registry } from "./swaggerRegistry";
 
-const options: swaggerJSDoc.Options = {
-  definition: {
-    openapi: '3.0.0',
+export const getSwaggerSpec = () => {
+  const generator = new OpenApiGeneratorV3(registry.definitions);
+
+  return generator.generateDocument({
+    openapi: "3.0.0",
     info: {
-      title: 'Minimal Multi-Gym Management API',
-      version: '1.0.0',
-      description: 'Fully automated dynamic Swagger API documentation compiled directly from Express routes JSDoc annotations.',
+      title: "Minimal Multi-Gym Management API",
+      version: "1.0.0",
+      description:
+        "Fully automated dynamic Swagger API documentation compiled directly from Zod schemas and route registries.",
     },
     servers: [
       {
-        url: 'http://localhost:3000',
-        description: 'Development Server',
+        url: "http://localhost:3000",
+        description: "Development Server",
       },
     ],
-    components: {
-      securitySchemes: {
-        bearerAuth: {
-          type: 'http',
-          scheme: 'bearer',
-          bearerFormat: 'JWT',
-          description: 'Input your token received from the Login API.',
-        },
-      },
-      schemas: {
-        ErrorResponse: {
-          type: 'object',
-          properties: {
-            status: { type: 'string', example: 'error' },
-            statusCode: { type: 'integer', example: 400 },
-            message: { type: 'string', example: 'Validation failed' },
-          },
-        },
-      },
-    },
-  },
-  // Automatically scan all source route files for JSDoc documentation
-  apis: ['./src/routes/*.ts', './src/routes/*.js', './dist/routes/*.js'],
+  });
 };
-
-export const swaggerSpec = swaggerJSDoc(options);

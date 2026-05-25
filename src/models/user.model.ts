@@ -1,11 +1,11 @@
-import { User as PrismaUser } from '../generated/prisma';
+import { User as PrismaUser } from "../generated/prisma";
 
 export type User = PrismaUser;
 
 export interface RegisterUserDTO {
   email: string;
   password?: string; // Optional during raw DTO, but validated strictly
-  role: 'owner' | 'staff';
+  role: "owner" | "staff";
   gym_id?: number | null;
 }
 

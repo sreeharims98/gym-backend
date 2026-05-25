@@ -1,4 +1,4 @@
-import { Plan as PrismaPlan } from '../generated/prisma';
+import { Plan as PrismaPlan } from "../generated/prisma";
 
 export type Plan = PrismaPlan;
 

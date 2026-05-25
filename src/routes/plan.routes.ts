@@ -1,142 +1,148 @@
-import { Router } from 'express';
+import { Router } from "express";
 import {
   createPlanController,
   getAllPlansController,
   getPlanByIdController,
   updatePlanController,
   deletePlanController,
-} from '../controllers/plan.controller';
-import { validate } from '../middlewares/validate';
-import { authenticate, requireRole } from '../middlewares/auth';
-import { createPlanSchema, updatePlanSchema, getPlanSchema } from '../validators/plan.validator';
+} from "../controllers/plan.controller";
+import { validate } from "../middlewares/validate";
+import { authenticate, requireRole } from "../middlewares/auth";
+import {
+  createPlanSchema,
+  updatePlanSchema,
+  getPlanSchema,
+} from "../validators/plan.validator";
+import { registry } from "../config/swaggerRegistry";
 
 const router = Router();
 
 // Secure all routes with authentication
 router.use(authenticate);
 
-/**
- * @openapi
- * /api/plans:
- *   get:
- *     tags:
- *       - Membership Plans
- *     summary: List all plans (Owner & Staff)
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: List of dynamic plans
- */
-router.get('/', getAllPlansController);
+// Programmatically register membership plan endpoints
+registry.registerPath({
+  method: "get",
+  path: "/api/plans",
+  summary: "List all plans (Owner & Staff)",
+  description:
+    "Fetches all dynamic packages (Monthly, 3 Months, Yearly, etc.).",
+  tags: ["Membership Plans"],
+  security: [{ bearerAuth: [] }],
+  responses: {
+    200: {
+      description: "List of preconfigured dynamic plans",
+    },
+  },
+});
 
-/**
- * @openapi
- * /api/plans/{id}:
- *   get:
- *     tags:
- *       - Membership Plans
- *     summary: Get plan details by ID
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - name: id
- *         in: path
- *         required: true
- *         schema:
- *           type: integer
- *     responses:
- *       200:
- *         description: Plan details
- *       404:
- *         description: Plan not found
- */
-router.get('/:id', validate(getPlanSchema), getPlanByIdController);
+registry.registerPath({
+  method: "get",
+  path: "/api/plans/{id}",
+  summary: "Get plan details by ID (Owner & Staff)",
+  description:
+    "Returns specific duration and price details of a membership package.",
+  tags: ["Membership Plans"],
+  security: [{ bearerAuth: [] }],
+  request: {
+    params: getPlanSchema.shape.params,
+  },
+  responses: {
+    200: {
+      description: "Plan details",
+    },
+    404: {
+      description: "Plan not found",
+    },
+  },
+});
 
-/**
- * @openapi
- * /api/plans:
- *   post:
- *     tags:
- *       - Membership Plans
- *     summary: Create dynamic membership plan (Owner only)
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true,
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - name
- *               - duration_months
- *               - price
- *             properties:
- *               name:
- *                 type: string
- *                 example: Monthly Package
- *               duration_months:
- *                 type: integer
- *                 example: 1
- *               price:
- *                 type: number
- *                 example: 1500
- *     responses:
- *       201:
- *         description: Plan created successfully
- */
-router.post('/', requireRole('owner'), validate(createPlanSchema), createPlanController);
+registry.registerPath({
+  method: "post",
+  path: "/api/plans",
+  summary: "Create dynamic membership plan (Owner only)",
+  description:
+    "Adds a new dynamic pricing package. Restricted to Owner privileges.",
+  tags: ["Membership Plans"],
+  security: [{ bearerAuth: [] }],
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: createPlanSchema.shape.body,
+        },
+      },
+    },
+  },
+  responses: {
+    201: {
+      description: "Plan created successfully",
+    },
+  },
+});
 
-/**
- * @openapi
- * /api/plans/{id}:
- *   put:
- *     tags:
- *       - Membership Plans
- *     summary: Update plan pricing/details (Owner only)
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - name: id
- *         in: path
- *         required: true
- *         schema:
- *           type: integer
- *     requestBody:
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               price:
- *                 type: number
- *                 example: 1300
- *     responses:
- *       200:
- *         description: Plan updated
- */
-router.put('/:id', requireRole('owner'), validate(getPlanSchema), validate(updatePlanSchema), updatePlanController);
+registry.registerPath({
+  method: "put",
+  path: "/api/plans/{id}",
+  summary: "Update plan details (Owner only)",
+  description:
+    "Updates price or period validity for a specific dynamic package.",
+  tags: ["Membership Plans"],
+  security: [{ bearerAuth: [] }],
+  request: {
+    params: getPlanSchema.shape.params,
+    body: {
+      content: {
+        "application/json": {
+          schema: updatePlanSchema.shape.body,
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: "Plan details updated",
+    },
+  },
+});
 
-/**
- * @openapi
- * /api/plans/{id}:
- *   delete:
- *     tags:
- *       - Membership Plans
- *     summary: Delete plan (Owner only)
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - name: id
- *         in: path
- *         required: true
- *         schema:
- *           type: integer
- *     responses:
- *       204:
- *         description: Plan deleted
- */
-router.delete('/:id', requireRole('owner'), validate(getPlanSchema), deletePlanController);
+registry.registerPath({
+  method: "delete",
+  path: "/api/plans/{id}",
+  summary: "Delete plan (Owner only)",
+  description: "Removes a membership plan from system options.",
+  tags: ["Membership Plans"],
+  security: [{ bearerAuth: [] }],
+  request: {
+    params: getPlanSchema.shape.params,
+  },
+  responses: {
+    204: {
+      description: "Plan deleted successfully",
+    },
+  },
+});
+
+router.get("/", getAllPlansController);
+router.get("/:id", validate(getPlanSchema), getPlanByIdController);
+router.post(
+  "/",
+  requireRole("owner"),
+  validate(createPlanSchema),
+  createPlanController,
+);
+router.put(
+  "/:id",
+  requireRole("owner"),
+  validate(getPlanSchema),
+  validate(updatePlanSchema),
+  updatePlanController,
+);
+router.delete(
+  "/:id",
+  requireRole("owner"),
+  validate(getPlanSchema),
+  deletePlanController,
+);
 
 export default router;
