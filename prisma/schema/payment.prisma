@@ -1,0 +1,16 @@
+model Payment {
+  id             Int       @id @default(autoincrement())
+  member_id      Int
+  amount_paid    Decimal   @db.Decimal(10, 2)
+  amount_pending Decimal   @db.Decimal(10, 2) @default(0.00)
+  due_date       DateTime  @db.Timestamptz
+  payment_status String    @default("unpaid") // "paid", "partial", "unpaid"
+  payment_date   DateTime? @db.Timestamptz
+  
+  member         Member    @relation(fields: [member_id], references: [id], onDelete: Cascade)
+
+  created_at     DateTime  @default(now()) @db.Timestamptz
+  updated_at     DateTime  @default(now()) @updatedAt @db.Timestamptz
+
+  @@map("payments")
+}
