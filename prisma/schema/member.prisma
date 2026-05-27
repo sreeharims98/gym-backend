@@ -14,8 +14,8 @@ model Member {
   gym_id            Int
   plan_id           Int
   
-  gym               Gym      @relation(fields: [gym_id], references: [id], onDelete: Cascade)
-  plan              Plan     @relation(fields: [plan_id], references: [id], onDelete: Cascade)
+  gym               Gym      @relation(fields: [gym_id], references: [id], onDelete: Restrict)
+  plan              Plan     @relation(fields: [plan_id], references: [id], onDelete: Restrict)
   
   payments          Payment[]
 

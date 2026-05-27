@@ -13,6 +13,9 @@ export const createGymRepository = async (data: CreateGymDTO): Promise<Gym> => {
 
 export const findAllGymsRepository = async (): Promise<Gym[]> => {
   return prisma.gym.findMany({
+    where: {
+      is_active: true,
+    },
     orderBy: {
       created_at: "desc",
     },
@@ -43,8 +46,9 @@ export const updateGymRepository = async (
 
 export const deleteGymRepository = async (id: number): Promise<boolean> => {
   try {
-    await prisma.gym.delete({
+    await prisma.gym.update({
       where: { id },
+      data: { is_active: false },
     });
     return true;
   } catch (error) {

@@ -15,6 +15,9 @@ export const createPlanRepository = async (
 
 export const findAllPlansRepository = async (): Promise<Plan[]> => {
   return prisma.plan.findMany({
+    where: {
+      is_active: true,
+    },
     orderBy: {
       duration_months: "asc",
     },
@@ -45,8 +48,9 @@ export const updatePlanRepository = async (
 
 export const deletePlanRepository = async (id: number): Promise<boolean> => {
   try {
-    await prisma.plan.delete({
+    await prisma.plan.update({
       where: { id },
+      data: { is_active: false },
     });
     return true;
   } catch (error) {

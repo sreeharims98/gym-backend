@@ -31,12 +31,10 @@ app.get("/api-docs/openapi.json", (req, res) => {
   try {
     res.status(200).json(getSwaggerSpec());
   } catch (error: any) {
-    res
-      .status(500)
-      .json({
-        message: "Failed to compile Swagger spec",
-        error: error.message,
-      });
+    res.status(500).json({
+      message: "Failed to compile Swagger spec",
+      error: error.message,
+    });
   }
 });
 
@@ -95,6 +93,6 @@ app.use(errorHandler);
 // Start server
 app.listen(port, () => {
   console.log(
-    `Gym Management API Server is running on http://localhost:${port}`,
+    `Gym Management API Server is running on http://localhost:${port}/api-docs`,
   );
 });
