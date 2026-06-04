@@ -14,6 +14,7 @@ import {
   getPaymentSchema,
   getStatsQuerySchema,
 } from "../validators/payment.validator";
+import { getMemberSchema } from "../validators/member.validator";
 import { registry } from "../config/swaggerRegistry";
 
 const router = Router();
@@ -107,11 +108,11 @@ registry.registerPath({
   path: "/api/payments/renew/{id}",
   summary: "Renew gym membership (Owner & Staff)",
   description:
-    "Extends a member's package, shifts their profile status to Active, and atomicly posts a new unpaid Payment invoice for billing.",
+    "Extends a member's package, shifts their profile status to Active, and atomicly posts a new paid Payment record for billing.",
   tags: ["Payments & Dashboards"],
   security: [{ bearerAuth: [] }],
   request: {
-    params: getPaymentSchema.shape.params,
+    params: getMemberSchema.shape.params,
     body: {
       content: {
         "application/json": {
@@ -142,7 +143,7 @@ router.post(
 );
 router.post(
   "/renew/:id",
-  validate(getPaymentSchema),
+  validate(getMemberSchema),
   validate(renewMembershipSchema),
   renewMembershipController,
 );

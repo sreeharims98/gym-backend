@@ -77,14 +77,15 @@ export const renewMembership = async (
       },
     });
 
-    // 2. Create the new invoice
+    // 2. Create the new invoice (marked as fully paid)
     const newPayment = await tx.payment.create({
       data: {
         member_id: memberId,
-        amount_paid: 0.0,
-        amount_pending: plan.price,
+        amount_paid: plan.price,
+        amount_pending: 0.0,
         due_date: dueDate,
-        payment_status: "unpaid",
+        payment_status: "paid",
+        payment_date: baseDate,
       },
       include: {
         member: {

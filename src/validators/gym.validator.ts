@@ -18,6 +18,14 @@ export const createGymSchema = z.object({
         description: "The primary contact number of the branch receptionist",
         example: "+91 98765 43210",
       }),
+    registration_fee: z
+      .number()
+      .nonnegative("Registration fee must be a non-negative number")
+      .optional()
+      .openapi({
+        description: "Default registration fee for the branch",
+        example: 500.0,
+      }),
   }),
 });
 
@@ -33,6 +41,14 @@ export const updateGymSchema = z.object({
     contact_no: z.string().min(1).max(50).optional().openapi({
       description: "Updated contact details",
     }),
+    registration_fee: z
+      .number()
+      .nonnegative("Registration fee must be a non-negative number")
+      .optional()
+      .openapi({
+        description: "Updated default registration fee for the branch",
+        example: 600.0,
+      }),
   }),
 });
 

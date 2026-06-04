@@ -23,6 +23,9 @@ export const registerMember = async (
     throw new Error("Membership plan not found");
   }
 
+  // Determine the registration fee to charge (override vs branch default)
+  const registrationFee = data.registration_fee !== undefined ? data.registration_fee : Number(gym.registration_fee);
+
   // Calculate membership expiration/payment due date
   const joinDate = new Date(data.join_date);
   const dueDate = new Date(joinDate);
@@ -45,6 +48,7 @@ export const registerMember = async (
         status: "active",
         gym_id: data.gym_id,
         plan_id: data.plan_id,
+        registration_fee: registrationFee,
       },
       include: {
         gym: true,
@@ -52,12 +56,13 @@ export const registerMember = async (
       },
     });
 
-    // 2. Automatically generate the initial unpaid payment record matching the selected plan price
+    // 2. Automatically generate the initial unpaid payment record matching the selected plan price + registration fee
+    const initialAmountPending = Number(plan.price) + registrationFee;
     await tx.payment.create({
       data: {
         member_id: member.id,
         amount_paid: 0.0,
-        amount_pending: plan.price,
+        amount_pending: initialAmountPending,
         due_date: dueDate,
         payment_status: "unpaid",
       },

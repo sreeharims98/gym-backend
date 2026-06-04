@@ -85,6 +85,14 @@ export const registerMemberSchema = z.object({
         description: "Initial Membership dynamic Plan ID selection",
         example: 1,
       }),
+    registration_fee: z
+      .number()
+      .nonnegative("Registration fee must be a non-negative number")
+      .optional()
+      .openapi({
+        description: "Registration fee charged. Omit to use Gym default, or pass 0 for free registration offer.",
+        example: 500.0,
+      }),
   }),
 });
 

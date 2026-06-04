@@ -7,6 +7,7 @@ export const createGymRepository = async (data: CreateGymDTO): Promise<Gym> => {
       name: data.name,
       location: data.location,
       contact_no: data.contact_no,
+      registration_fee: data.registration_fee,
     },
   });
 };

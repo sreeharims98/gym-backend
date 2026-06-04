@@ -14,6 +14,7 @@ export interface RegisterMemberDTO {
   weight?: number | null;
   gym_id: number;
   plan_id: number;
+  registration_fee?: number;
 }
 
 export interface UpdateMemberDTO {
