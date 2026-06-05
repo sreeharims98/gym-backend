@@ -1,17 +1,5 @@
 import { z } from "zod";
 
-export const recordPaymentSchema = z.object({
-  body: z.object({
-    amount_paid: z
-      .number()
-      .nonnegative("Amount paid must be a positive number or zero")
-      .openapi({
-        description: "The amount of cash/payment collected for this invoice",
-        example: 1500.0,
-      }),
-  }),
-});
-
 export const renewMembershipSchema = z.object({
   body: z.object({
     plan_id: z
@@ -23,8 +11,7 @@ export const renewMembershipSchema = z.object({
           "The newly selected dynamic membership package ID to assign",
         example: 2,
       }),
-    payment_date: z
-      .string()
+    payment_date: z.iso
       .datetime()
       .or(z.string().regex(/^\d{4}-\d{2}-\d{2}$/))
       .optional()

@@ -86,3 +86,17 @@ export const deleteMemberController = async (
     next(error);
   }
 };
+
+export const assignPlanController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const member = await memberService.assignPlanToMember(id, req.body);
+    res.status(200).json(member);
+  } catch (error) {
+    next(error);
+  }
+};

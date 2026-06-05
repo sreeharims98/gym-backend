@@ -19,9 +19,8 @@ export const createMemberRepository = async (
       photo_url: data.photo_url || null,
       height: data.height || null,
       weight: data.weight || null,
-      status: "active",
+      status: "pending",
       gym_id: data.gym_id,
-      plan_id: data.plan_id,
       registration_fee: data.registration_fee,
     },
     include: {

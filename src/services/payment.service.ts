@@ -2,51 +2,7 @@ import * as paymentRepository from "../repositories/payment.repository";
 import * as memberRepository from "../repositories/member.repository";
 import * as planRepository from "../repositories/plan.repository";
 import { prisma } from "../config/prisma";
-import {
-  Payment,
-  RecordPaymentDTO,
-  RenewMembershipDTO,
-} from "../models/payment.model";
-
-export const recordPayment = async (
-  id: number,
-  data: RecordPaymentDTO,
-): Promise<any> => {
-  const payment = await paymentRepository.findPaymentByIdRepository(id);
-  if (!payment) {
-    throw new Error("Payment record not found");
-  }
-
-  const originalPending = Number(payment.amount_pending);
-  const originalPaid = Number(payment.amount_paid);
-  const totalAmount = originalPending + originalPaid;
-
-  const newPaid = originalPaid + data.amount_paid;
-  const newPending = Math.max(0, totalAmount - newPaid);
-
-  let status = "unpaid";
-  if (newPending <= 0) {
-    status = "paid";
-  } else if (newPaid > 0) {
-    status = "partial";
-  }
-
-  const updatedPayment = await paymentRepository.updatePaymentRepository(id, {
-    amount_paid: newPaid,
-    amount_pending: newPending,
-    payment_status: status,
-    payment_date: new Date(),
-  });
-
-  // If marked paid, let's automatically ensure the member status is active
-  if (status === "paid") {
-    await memberRepository.updateMemberRepository(payment.member_id, {
-      status: "active",
-    });
-  }
-
-  return updatedPayment;
-};
+import { RenewMembershipDTO } from "../models/payment.model";
 
 export const renewMembership = async (
   memberId: number,

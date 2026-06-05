@@ -6,6 +6,7 @@ import {
   Member,
   RegisterMemberDTO,
   UpdateMemberDTO,
+  AssignPlanDTO,
 } from "../models/member.model";
 
 export const registerMember = async (
@@ -17,23 +18,13 @@ export const registerMember = async (
     throw new Error("Gym branch not found");
   }
 
-  // Fetch plan details to calculate prices and due dates
-  const plan = await planRepository.findPlanByIdRepository(data.plan_id);
-  if (!plan) {
-    throw new Error("Membership plan not found");
-  }
-
   // Determine the registration fee to charge (override vs branch default)
   const registrationFee = data.registration_fee !== undefined ? data.registration_fee : Number(gym.registration_fee);
 
-  // Calculate membership expiration/payment due date
   const joinDate = new Date(data.join_date);
-  const dueDate = new Date(joinDate);
-  dueDate.setMonth(dueDate.getMonth() + plan.duration_months);
 
-  // Execute in a transaction so member and initial payment are created together atomicly
   return prisma.$transaction(async (tx) => {
-    // 1. Create member
+    // Create member with pending status
     const member = await tx.member.create({
       data: {
         name: data.name,
@@ -45,9 +36,8 @@ export const registerMember = async (
         photo_url: data.photo_url || null,
         height: data.height || null,
         weight: data.weight || null,
-        status: "active",
+        status: "pending",
         gym_id: data.gym_id,
-        plan_id: data.plan_id,
         registration_fee: registrationFee,
       },
       include: {
@@ -56,17 +46,19 @@ export const registerMember = async (
       },
     });
 
-    // 2. Automatically generate the initial unpaid payment record matching the selected plan price + registration fee
-    const initialAmountPending = Number(plan.price) + registrationFee;
-    await tx.payment.create({
-      data: {
-        member_id: member.id,
-        amount_paid: 0.0,
-        amount_pending: initialAmountPending,
-        due_date: dueDate,
-        payment_status: "unpaid",
-      },
-    });
+    // Create the registration fee payment record (fully paid) if registration fee > 0
+    if (registrationFee > 0) {
+      await tx.payment.create({
+        data: {
+          member_id: member.id,
+          amount_paid: registrationFee,
+          amount_pending: 0.0,
+          due_date: joinDate,
+          payment_status: "paid",
+          payment_date: joinDate,
+        },
+      });
+    }
 
     return member;
   });
@@ -97,4 +89,58 @@ export const deleteMember = async (id: number): Promise<boolean> => {
   const existing = await memberRepository.findMemberByIdRepository(id);
   if (!existing) return false;
   return memberRepository.deleteMemberRepository(id);
+};
+
+export const assignPlanToMember = async (
+  memberId: number,
+  data: AssignPlanDTO,
+): Promise<Member> => {
+  const member = await memberRepository.findMemberByIdRepository(memberId);
+  if (!member) {
+    throw new Error("Member not found");
+  }
+
+  const plan = await planRepository.findPlanByIdRepository(data.plan_id);
+  if (!plan) {
+    throw new Error("Membership plan not found");
+  }
+
+  // Use custom start date if provided, otherwise default to current date
+  const baseDate = data.start_date ? new Date(data.start_date) : new Date();
+
+  // Calculate membership expiration/payment due date
+  const dueDate = new Date(baseDate);
+  dueDate.setMonth(dueDate.getMonth() + plan.duration_months);
+
+  // Run updates in a transaction so assigning plan and creating invoice is atomic
+  return prisma.$transaction(async (tx) => {
+    // 1. Update member with assigned plan, active status, and alignment of join_date with plan start date
+    const updatedMember = await tx.member.update({
+      where: { id: memberId },
+      data: {
+        plan_id: data.plan_id,
+        status: "active",
+        join_date: baseDate,
+      },
+      include: {
+        gym: true,
+        plan: true,
+      },
+    });
+
+    // 2. Automatically generate the initial paid payment record matching plan price
+    const initialAmountPaid = Number(plan.price);
+    await tx.payment.create({
+      data: {
+        member_id: memberId,
+        amount_paid: initialAmountPaid,
+        amount_pending: 0.0,
+        due_date: dueDate,
+        payment_status: "paid",
+        payment_date: baseDate,
+      },
+    });
+
+    return updatedMember;
+  });
 };

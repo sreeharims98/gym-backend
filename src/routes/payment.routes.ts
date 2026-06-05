@@ -1,6 +1,5 @@
 import { Router } from "express";
 import {
-  payPaymentController,
   renewMembershipController,
   getOverdueDashboardController,
   getPaymentStatsController,
@@ -9,7 +8,6 @@ import {
 import { validate } from "../middlewares/validate";
 import { authenticate } from "../middlewares/auth";
 import {
-  recordPaymentSchema,
   renewMembershipSchema,
   getPaymentSchema,
   getStatsQuerySchema,
@@ -78,30 +76,7 @@ registry.registerPath({
   },
 });
 
-registry.registerPath({
-  method: "post",
-  path: "/api/payments/pay/{id}",
-  summary: "Log a fee payment/collection (Owner & Staff)",
-  description:
-    "Records collection amount for an invoice, updates balances, and automatically activates the member on complete settlement.",
-  tags: ["Payments & Dashboards"],
-  security: [{ bearerAuth: [] }],
-  request: {
-    params: getPaymentSchema.shape.params,
-    body: {
-      content: {
-        "application/json": {
-          schema: recordPaymentSchema.shape.body,
-        },
-      },
-    },
-  },
-  responses: {
-    200: {
-      description: "Balances settled successfully",
-    },
-  },
-});
+
 
 registry.registerPath({
   method: "post",
@@ -135,12 +110,7 @@ router.get(
   validate(getPaymentSchema),
   getWhatsAppReminderController,
 );
-router.post(
-  "/pay/:id",
-  validate(getPaymentSchema),
-  validate(recordPaymentSchema),
-  payPaymentController,
-);
+
 router.post(
   "/renew/:id",
   validate(getMemberSchema),

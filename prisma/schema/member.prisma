@@ -9,14 +9,14 @@ model Member {
   photo_url         String?  @db.VarChar(1000)
   height            Float?
   weight            Float?
-  status            String   @default("active") // "active", "expired", "pending"
+  status            String   @default("pending") // "active", "expired", "pending"
   registration_fee  Decimal  @default(0.00) @db.Decimal(10, 2)
   
   gym_id            Int
-  plan_id           Int
+  plan_id           Int?
   
   gym               Gym      @relation(fields: [gym_id], references: [id], onDelete: Restrict)
-  plan              Plan     @relation(fields: [plan_id], references: [id], onDelete: Restrict)
+  plan              Plan?    @relation(fields: [plan_id], references: [id], onDelete: Restrict)
   
   payments          Payment[]
 

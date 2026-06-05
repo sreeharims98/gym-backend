@@ -13,8 +13,12 @@ export interface RegisterMemberDTO {
   height?: number | null;
   weight?: number | null;
   gym_id: number;
-  plan_id: number;
   registration_fee?: number;
+}
+
+export interface AssignPlanDTO {
+  plan_id: number;
+  start_date?: string | Date;
 }
 
 export interface UpdateMemberDTO {

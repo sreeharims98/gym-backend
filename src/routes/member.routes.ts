@@ -5,6 +5,7 @@ import {
   getMemberByIdController,
   updateMemberController,
   deleteMemberController,
+  assignPlanController,
 } from "../controllers/member.controller";
 import { validate } from "../middlewares/validate";
 import { authenticate } from "../middlewares/auth";
@@ -13,6 +14,7 @@ import {
   updateMemberSchema,
   getMemberSchema,
   listMembersQuerySchema,
+  assignPlanSchema,
 } from "../validators/member.validator";
 import { registry } from "../config/swaggerRegistry";
 
@@ -127,9 +129,39 @@ registry.registerPath({
   },
 });
 
+registry.registerPath({
+  method: "post",
+  path: "/api/members/{id}/assign-plan",
+  summary: "Assign membership plan to a member",
+  description:
+    "Assigns a plan to a pending member, computes expiry, and atomicly posts their first unpaid invoice.",
+  tags: ["Members Management"],
+  security: [{ bearerAuth: [] }],
+  request: {
+    params: assignPlanSchema.shape.params,
+    body: {
+      content: {
+        "application/json": {
+          schema: assignPlanSchema.shape.body,
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: "Plan assigned and initial invoice generated",
+    },
+  },
+});
+
 router.get("/", validate(listMembersQuerySchema), getAllMembersController);
 router.get("/:id", validate(getMemberSchema), getMemberByIdController);
 router.post("/", validate(registerMemberSchema), registerMemberController);
+router.post(
+  "/:id/assign-plan",
+  validate(assignPlanSchema),
+  assignPlanController,
+);
 router.put(
   "/:id",
   validate(getMemberSchema),

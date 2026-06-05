@@ -23,8 +23,7 @@ export const registerMemberSchema = z.object({
       description: "Member physical address details",
       example: "Adyar, Chennai",
     }),
-    join_date: z
-      .string()
+    join_date: z.iso
       .datetime({ message: "Join date must be a valid ISO 8601 date string" })
       .or(
         z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Join date must be YYYY-MM-DD"),
@@ -77,14 +76,6 @@ export const registerMemberSchema = z.object({
         description: "Branch ID relationship assigning the member to a gym",
         example: 1,
       }),
-    plan_id: z
-      .number()
-      .int()
-      .positive("Plan ID must be a positive integer")
-      .openapi({
-        description: "Initial Membership dynamic Plan ID selection",
-        example: 1,
-      }),
     registration_fee: z
       .number()
       .nonnegative("Registration fee must be a non-negative number")
@@ -102,8 +93,7 @@ export const updateMemberSchema = z.object({
     phone: z.string().min(1).max(50).optional(),
     email: z.string().email("Invalid email address").optional().nullable(),
     address: z.string().max(500).optional().nullable(),
-    join_date: z
-      .string()
+    join_date: z.iso
       .datetime()
       .or(z.string().regex(/^\d{4}-\d{2}-\d{2}$/))
       .optional(),
@@ -153,5 +143,28 @@ export const listMembersQuerySchema = z.object({
       description: "Filter list by member standings",
       example: "active",
     }),
+  }),
+});
+
+export const assignPlanSchema = z.object({
+  params: z.object({
+    id: z.string().regex(/^\d+$/, "ID must be a number").openapi({
+      description: "Numeric unique member ID",
+      example: "1",
+    }),
+  }),
+  body: z.object({
+    plan_id: z.number().int().positive("Plan ID must be a positive integer").openapi({
+      description: "ID of the membership plan to assign",
+      example: 1,
+    }),
+    start_date: z.iso
+      .datetime({ message: "Start date must be a valid ISO 8601 date string" })
+      .or(z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Start date must be YYYY-MM-DD"))
+      .optional()
+      .openapi({
+        description: "Membership plan start date. Defaults to today's date if not specified.",
+        example: "2026-06-10",
+      }),
   }),
 });

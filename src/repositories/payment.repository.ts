@@ -1,37 +1,9 @@
 import { prisma } from "../config/prisma";
-import { Payment, RecordPaymentDTO } from "../models/payment.model";
+import { Payment } from "../models/payment.model";
 
 export const findPaymentByIdRepository = async (id: number): Promise<any> => {
   return prisma.payment.findUnique({
     where: { id },
-    include: {
-      member: {
-        include: {
-          gym: true,
-          plan: true,
-        },
-      },
-    },
-  });
-};
-
-export const updatePaymentRepository = async (
-  id: number,
-  data: {
-    amount_paid: number;
-    amount_pending: number;
-    payment_status: string;
-    payment_date?: Date | null;
-  },
-): Promise<any> => {
-  return prisma.payment.update({
-    where: { id },
-    data: {
-      amount_paid: data.amount_paid,
-      amount_pending: data.amount_pending,
-      payment_status: data.payment_status,
-      payment_date: data.payment_date,
-    },
     include: {
       member: {
         include: {
