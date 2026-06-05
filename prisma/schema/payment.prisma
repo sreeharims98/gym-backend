@@ -6,6 +6,7 @@ model Payment {
   due_date       DateTime  @db.Timestamptz
   payment_status String    @default("unpaid") // "paid", "partial", "unpaid"
   payment_date   DateTime? @db.Timestamptz
+  payment_type   String    @default("plan") // "plan", "registration"
   
   member         Member    @relation(fields: [member_id], references: [id], onDelete: Cascade)
 

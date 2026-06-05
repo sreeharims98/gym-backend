@@ -56,6 +56,7 @@ export const registerMember = async (
           due_date: joinDate,
           payment_status: "paid",
           payment_date: joinDate,
+          payment_type: "registration",
         },
       });
     }
@@ -138,6 +139,7 @@ export const assignPlanToMember = async (
         due_date: dueDate,
         payment_status: "paid",
         payment_date: baseDate,
+        payment_type: "plan",
       },
     });
 

@@ -42,6 +42,7 @@ export const renewMembership = async (
         due_date: dueDate,
         payment_status: "paid",
         payment_date: baseDate,
+        payment_type: "plan",
       },
       include: {
         member: {
