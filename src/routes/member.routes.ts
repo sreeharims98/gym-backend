@@ -67,7 +67,7 @@ registry.registerPath({
   path: "/api/members",
   summary: "Register a new Gym Member (Owner & Staff)",
   description:
-    "Registers a member, computes membership expiry, and atomicly posts their first unpaid invoice.",
+    "Registers a member and posts their first invoice. If plan_id is provided, the member is activated immediately and a single combined invoice (registration fee + plan price) is generated; otherwise registration-only behavior with pending status is preserved.",
   tags: ["Members Management"],
   security: [{ bearerAuth: [] }],
   request: {
@@ -81,7 +81,8 @@ registry.registerPath({
   },
   responses: {
     201: {
-      description: "Member registered and initial invoice generated",
+      description:
+        "Returns { member, invoice }. invoice is the created Payment row, or null if no charge was made.",
     },
   },
 });

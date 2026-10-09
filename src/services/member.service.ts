@@ -8,10 +8,11 @@ import {
   UpdateMemberDTO,
   AssignPlanDTO,
 } from "../models/member.model";
+import { Payment } from "../models/payment.model";
 
 export const registerMember = async (
   data: RegisterMemberDTO,
-): Promise<Member> => {
+): Promise<{ member: Member; invoice: Payment | null }> => {
   // Validate that the branch exists
   const gym = await gymRepository.findGymByIdRepository(data.gym_id);
   if (!gym) {
@@ -23,22 +24,33 @@ export const registerMember = async (
 
   const joinDate = new Date(data.join_date);
 
+  // If a plan is given at registration, resolve it up front so a bad plan_id fails fast
+  let plan = null;
+  if (data.plan_id !== undefined) {
+    plan = await planRepository.findPlanByIdRepository(data.plan_id);
+    if (!plan) {
+      throw new Error("Membership plan not found");
+    }
+  }
+
   return prisma.$transaction(async (tx) => {
-    // Create member with pending status
+    const baseDate = plan && data.start_date ? new Date(data.start_date) : joinDate;
+
     const member = await tx.member.create({
       data: {
         name: data.name,
         phone: data.phone,
         email: data.email || null,
         address: data.address || null,
-        join_date: joinDate,
+        join_date: baseDate,
         emergency_contact: data.emergency_contact,
         photo_url: data.photo_url || null,
         height: data.height || null,
         weight: data.weight || null,
-        status: "pending",
+        status: plan ? "active" : "pending",
         gym_id: data.gym_id,
         registration_fee: registrationFee,
+        ...(plan ? { plan_id: plan.id } : {}),
       },
       include: {
         gym: true,
@@ -46,9 +58,30 @@ export const registerMember = async (
       },
     });
 
-    // Create the registration fee payment record (fully paid) if registration fee > 0
+    // Plan given: single combined invoice covering registration fee + plan price
+    if (plan) {
+      const dueDate = new Date(baseDate);
+      dueDate.setMonth(dueDate.getMonth() + plan.duration_months);
+
+      const invoice = await tx.payment.create({
+        data: {
+          member_id: member.id,
+          amount_paid: registrationFee + Number(plan.price),
+          amount_pending: 0.0,
+          due_date: dueDate,
+          payment_status: "paid",
+          payment_date: baseDate,
+          payment_type: "registration_with_plan",
+        },
+      });
+
+      return { member, invoice };
+    }
+
+    // No plan: registration-fee-only invoice, unchanged from prior behavior
+    let invoice = null;
     if (registrationFee > 0) {
-      await tx.payment.create({
+      invoice = await tx.payment.create({
         data: {
           member_id: member.id,
           amount_paid: registrationFee,
@@ -61,7 +94,7 @@ export const registerMember = async (
       });
     }
 
-    return member;
+    return { member, invoice };
   });
 };
 

@@ -84,6 +84,23 @@ export const registerMemberSchema = z.object({
         description: "Registration fee charged. Omit to use Gym default, or pass 0 for free registration offer.",
         example: 500.0,
       }),
+    plan_id: z
+      .number()
+      .int()
+      .positive("Plan ID must be a positive integer")
+      .optional()
+      .openapi({
+        description: "Optional membership plan to assign immediately at registration. Omit to register without a plan (status stays pending).",
+        example: 1,
+      }),
+    start_date: z.iso
+      .datetime({ message: "Start date must be a valid ISO 8601 date string" })
+      .or(z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Start date must be YYYY-MM-DD"))
+      .optional()
+      .openapi({
+        description: "Plan start date. Defaults to join_date if plan_id is given but start_date is omitted. Ignored if plan_id is omitted.",
+        example: "2026-06-10",
+      }),
   }),
 });
 

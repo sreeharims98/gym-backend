@@ -7,8 +7,8 @@ export const registerMemberController = async (
   next: NextFunction,
 ) => {
   try {
-    const member = await memberService.registerMember(req.body);
-    res.status(201).json(member);
+    const result = await memberService.registerMember(req.body);
+    res.status(201).json(result);
   } catch (error) {
     next(error);
   }

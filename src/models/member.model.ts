@@ -14,6 +14,8 @@ export interface RegisterMemberDTO {
   weight?: number | null;
   gym_id: number;
   registration_fee?: number;
+  plan_id?: number;
+  start_date?: string | Date;
 }
 
 export interface AssignPlanDTO {
